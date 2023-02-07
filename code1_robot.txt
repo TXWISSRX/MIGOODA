@@ -1,0 +1,231 @@
+const int SENSOR_edge_RIGHT= A0;
+const int SENSOR_RIGHT =A1;
+const int SENSOR_center= A2;
+const int SENSOR_LEFT =A3;
+const int SENSOR_edge_LEFT= A4;
+
+const int diode=13;
+
+const int mrf =3;
+const int mrr=5 ;
+const int mlf= 6;
+const int mlr =9;
+
+bool ok=false;
+
+int value_SENSOR_edge_LEFT;
+int value_SENSOR_LEFT;
+int value_SENSOR_center;
+int value_SENSOR_edge_RIGHT;
+int value_SENSOR_RIGHT;
+
+
+int seuil[3][5];
+int s1;
+int s2;
+int s3;
+int s4;
+int s5;
+
+typedef enum
+{
+  state1,
+  state2,
+  state3
+}robotStates;
+robotStates robot=s1;
+
+
+ bool k=false;
+ bool j=false;
+ bool l=false;
+
+void setup() {
+  int debut=millis();
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+pinMode(SENSOR_edge_LEFT, INPUT); 
+pinMode(SENSOR_LEFT,INPUT); 
+pinMode(SENSOR_center,INPUT); 
+pinMode(SENSOR_edge_RIGHT,INPUT); 
+pinMode( SENSOR_RIGHT, INPUT);
+
+pinMode(diode,OUTPUT);
+
+pinMode(mrf, OUTPUT); 
+pinMode(mrr, OUTPUT); 
+pinMode(mlf, OUTPUT); 
+pinMode(mlr, OUTPUT);
+
+
+
+digitalWrite(diode,LOW);
+while(millis()-debut < 5000){
+  seuil[0][0]=analogRead(SENSOR_edge_RIGHT);
+seuil[0][1]=analogRead(SENSOR_RIGHT);
+seuil[0][2]=analogRead(SENSOR_center);
+seuil[0][3]=analogRead(SENSOR_LEFT);
+seuil[0][4]=analogRead(SENSOR_edge_LEFT);
+  }
+
+debut=millis();
+digitalWrite(diode,HIGH);
+while(millis()-debut < 5000){
+  seuil[1][0]=analogRead(SENSOR_edge_RIGHT);
+seuil[1][1]=analogRead(SENSOR_RIGHT);
+seuil[1][2]=analogRead(SENSOR_center);
+seuil[1][3]=analogRead(SENSOR_LEFT);
+seuil[1][4]=analogRead(SENSOR_edge_LEFT);
+}
+
+
+digitalWrite(diode,LOW);
+
+debut=millis();
+
+while(millis()-debut < 5000){
+seuil[2][0]=(seuil[0][0]+seuil[1][0])/2;
+seuil[2][1]=(seuil[0][1]+seuil[1][1])/2;
+seuil[2][2]=(seuil[0][2]+seuil[1][2])/2;
+seuil[2][3]=(seuil[0][3]+seuil[1][3])/2;
+seuil[2][4]=(seuil[0][4]+seuil[1][4])/2;
+ok=true;
+}
+s1=seuil[2][4];
+s2=seuil[2][3];
+s3=seuil[2][2];
+s4=seuil[2][1];
+s5=seuil[2][0];
+
+Serial.println(s1);
+Serial.println(s2);
+Serial.println(s3);
+Serial.println(s4);
+Serial.println(s5);
+
+}
+
+
+
+//mrf:motor right forward
+//mlf:motor left forward
+//mrr:motor right reverse
+//mlr:motor left reverse
+
+  
+void forward()
+{
+ analogWrite(mrf,110);   
+ analogWrite(mrr,0); 
+ analogWrite(mlf,120);
+ analogWrite(mlr,0); 
+ 
+}
+void backward()
+{
+ analogWrite(mrf,0);   
+ analogWrite(mrr,110); 
+ analogWrite(mlf,0);
+ analogWrite(mlr,120); 
+ 
+}
+
+void left2()
+{ analogWrite(mrf,130); 
+  analogWrite(mrr,0); 
+  analogWrite(mlf,0);
+  analogWrite(mlr,50); 
+}
+
+void left()
+{ analogWrite(mrf,110); 
+  analogWrite(mrr,0); 
+  analogWrite(mlf,0);
+  analogWrite(mlr,0); 
+}
+
+void right()
+{analogWrite(mrf,0); 
+ analogWrite(mrr,0); 
+ analogWrite(mlf,120);
+ analogWrite(mlr,0); 
+ 
+}
+
+void right2()
+{analogWrite(mrf,0); 
+ analogWrite(mrr,50); 
+ analogWrite(mlf,120);
+ analogWrite(mlr,0); 
+ 
+}
+
+
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  Serial.print(  value_SENSOR_edge_LEFT  );
+Serial.print("   ");
+Serial.print(  value_SENSOR_LEFT  );
+Serial.print("   ");
+Serial.print(  value_SENSOR_center  );
+Serial.print("   ");
+ Serial.print(  value_SENSOR_RIGHT );
+ Serial.print("   ");
+ Serial.print(  value_SENSOR_edge_RIGHT  );
+
+ Serial.println("   ");
+    if(ok==true){
+    value_SENSOR_edge_LEFT=analogRead(SENSOR_edge_LEFT);
+    value_SENSOR_LEFT=analogRead(SENSOR_LEFT);
+    value_SENSOR_center=analogRead(SENSOR_center);
+    value_SENSOR_edge_RIGHT=analogRead(SENSOR_edge_RIGHT);
+ value_SENSOR_RIGHT=analogRead(SENSOR_RIGHT);
+switch(robot)
+{
+case state1:
+{
+  if(k==false){
+    forward();
+    delay(500);
+     k=true;
+  }
+  else if(k==true){
+   
+if (value_SENSOR_edge_RIGHT>s5||value_SENSOR_edge_LEFT>s1)
+{left2();
+}
+if (value_SENSOR_LEFT>s2&&value_SENSOR_RIGHT<s4)
+{left();}
+else if (value_SENSOR_LEFT<s2&&value_SENSOR_center>s3&&value_SENSOR_RIGHT<s4)
+{forward();}
+else if (value_SENSOR_LEFT<s2&&value_SENSOR_RIGHT>s4)
+{right();}
+
+}
+ 
+if (value_SENSOR_edge_RIGHT>s5&&value_SENSOR_RIGHT>s4&&value_SENSOR_LEFT<s2&&value_SENSOR_edge_LEFT<s1)
+  {
+    robot=state2;
+  }
+}break;
+
+
+case state2:
+{digitalWrite(diode,HIGH);
+
+
+  if ((value_SENSOR_LEFT>s2||value_SENSOR_edge_LEFT>s1)&&value_SENSOR_RIGHT<s4)
+{left();}
+else if (value_SENSOR_LEFT<s2&&value_SENSOR_center>s3&&value_SENSOR_RIGHT<s4)
+{forward();}
+else if (value_SENSOR_LEFT<s2&&value_SENSOR_RIGHT>s4)
+{right();}
+else if (value_SENSOR_edge_LEFT<s1&&value_SENSOR_LEFT<s2&&value_SENSOR_center<s3&&value_SENSOR_RIGHT<s4&&value_SENSOR_edge_RIGHT<s5&& millis()>35000)
+{forward();}
+
+
+}break;
+}
+}
+}
